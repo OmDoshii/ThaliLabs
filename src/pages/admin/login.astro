@@ -1,0 +1,18 @@
+---
+import Base from '../../layouts/Base.astro';
+export const prerender = false;
+const e = Astro.url.searchParams.get('e');
+const msg = e === 'bad' ? 'Wrong password.' : e === 'locked' ? 'Too many attempts. Try again in 15 minutes.'
+  : e === 'config' ? 'Admin is not set up. Set ADMIN_PASSWORD (12+ characters) and ADMIN_SESSION_SECRET (24+ characters).' : '';
+---
+<Base title="Admin sign in" noindex>
+  <div class="mx-auto max-w-sm px-5 py-16">
+    <h1 class="display text-4xl">Admin</h1>
+    <form method="post" action="/api/admin/login" class="mt-6 space-y-3">
+      <label for="pw" class="block text-sm font-semibold">Password</label>
+      <input id="pw" name="password" type="password" required autocomplete="current-password" class="w-full rounded-md border-2 border-navy bg-paper px-3 py-2.5" />
+      {msg && <p role="alert" class="text-sm text-fat">{msg}</p>}
+      <button class="w-full rounded-md bg-ultramarine px-4 py-2.5 font-semibold text-white hover:bg-ultramarine-deep">Sign in</button>
+    </form>
+  </div>
+</Base>

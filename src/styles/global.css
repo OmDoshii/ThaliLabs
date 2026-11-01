@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@theme {
+  --color-chalk: #f2f4fa;
+  --color-paper: #ffffff;
+  --color-navy: #141b4d;
+  --color-ultramarine: #2237a6;
+  --color-ultramarine-deep: #18297e;
+  --color-marigold: #ffb703;
+  --color-protein: #0b8f5f;
+  --color-carbs: #d98a00;
+  --color-fat: #d9363e;
+  --color-muted: #5a6085;
+  --color-rule: #d9ddee;
+  --font-display: "Anybody", "Arial Narrow", system-ui, sans-serif;
+  --font-sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--color-chalk);
+  color: var(--color-navy);
+  font-family: var(--font-sans);
+  font-feature-settings: "tnum" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Headline + numeric style: condensed, heavy, poster-like */
+.display {
+  font-family: var(--font-display);
+  font-variation-settings: "wdth" 70;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 0.95;
+}
+.display-num {
+  font-family: var(--font-display);
+  font-variation-settings: "wdth" 80;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-marigold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---- The nutrition label: thick rules like a real pack label ---- */
+.label-card {
+  background: var(--color-paper);
+  border: 2px solid var(--color-navy);
+  border-radius: 6px;
+}
+.label-rule-thick { border-top: 8px solid var(--color-navy); }
+.label-rule-mid   { border-top: 4px solid var(--color-navy); }
+.label-rule-thin  { border-top: 1px solid var(--color-rule); }
+
+/* ---- Macro bars: the one orchestrated motion ---- */
+.macro-fill {
+  transform-origin: left center;
+  transition: transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ---- Search suggestion list ---- */
+.suggest[role="option"][aria-selected="true"] { background: #e8ecfb; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .macro-fill { transition: none; }
+  * { animation: none !important; }
+}

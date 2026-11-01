@@ -1,0 +1,105 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getEnv } from '../../lib/env.ts';
+import { adminClient, devStore } from '../../lib/db.ts';
+import { listFoods } from '../../lib/db.ts';
+import { foodTitle } from '../../components/FoodLabel.tsx';
+export const prerender = false;
+
+const env = getEnv(Astro.locals);
+const db = adminClient(env);
+const foods = await listFoods(Astro.locals, { limit: 1000 });
+const review = db ? ((await db.from('review_queue').select('*').order('created_at', { ascending: false }).limit(100)).data ?? []) : devStore.review;
+const pending = foods.filter((f) => f.status !== 'verified');
+const err = Astro.url.searchParams.get('e');
+---
+<Base title="Admin | Thali Labs" noindex>
+  <div class="mx-auto max-w-6xl px-5 py-10">
+    <div class="flex items-center justify-between">
+      <h1 class="display text-4xl">Admin</h1>
+      <form method="post" action="/api/admin/action"><input type="hidden" name="act" value="logout" />
+        <button class="rounded-md border-2 border-navy px-3 py-1.5 text-sm font-semibold hover:bg-chalk">Sign out</button></form>
+    </div>
+    {!db && <p class="mt-4 rounded-md bg-marigold/30 p-3 text-sm">Supabase isn't configured, so you're editing in-memory sample data. Changes reset on restart.</p>}
+    {err === 'invalid' && <p role="alert" class="mt-4 text-fat">Values must be numbers from 0 to 1000.</p>}
+    {err === 'invalid_add' && <p role="alert" class="mt-4 text-fat">Product not saved. Name, calories, protein, carbs and fat are required, as numbers (macros 0 to 100 per 100g).</p>}
+    {err === 'save_failed' && <p role="alert" class="mt-4 text-fat">Product not saved. The database rejected it.</p>}
+    {Astro.url.searchParams.get('ok') === 'added' && <p role="status" class="mt-4 text-protein">Product added and marked verified.</p>}
+    {Astro.url.searchParams.get('w') === 'atwater' && <p role="alert" class="mt-2 text-fat">Heads up: calories don't match protein, carbs and fat (4/4/9 rule). Check the numbers against the pack.</p>}
+
+    <details class="mt-8 rounded-md border-2 border-navy bg-paper p-4" open>
+      <summary class="display cursor-pointer text-2xl">Add a product</summary>
+      <p class="mt-2 text-sm text-muted">Copy the numbers per 100g from the pack. If the pack shows per serving, convert to 100g first. Leave Brand empty for a generic food.</p>
+      <form method="post" action="/api/admin/action" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <input type="hidden" name="act" value="add" />
+        <label class="text-sm font-semibold">Brand<input name="brand" placeholder="Milky Mist" class="mt-1 w-full rounded-md border-2 border-rule px-2 py-1.5 font-normal" /></label>
+        <label class="text-sm font-semibold">Product name *<input name="name" required placeholder="Paneer" class="mt-1 w-full rounded-md border-2 border-rule px-2 py-1.5 font-normal" /></label>
+        <label class="text-sm font-semibold">Variant<input name="variant" placeholder="Gold, Taaza, 200g" class="mt-1 w-full rounded-md border-2 border-rule px-2 py-1.5 font-normal" /></label>
+        <label class="text-sm font-semibold">Category *<input name="category" required placeholder="paneer, milk, whey, curd" class="mt-1 w-full rounded-md border-2 border-rule px-2 py-1.5 font-normal" /></label>
+        <label class="text-sm font-semibold">Calories (kcal) *<input name="kcal" required inputmode="decimal" class="mt-1 w-full rounded-md border-2 border-rule px-2 py-1.5 font-normal" /></label>
+        <label class="text-sm font-semibold">Protein (g) *<input name="protein" required inputmode="decimal" class="mt-1 w-full rounded-md border-2 border-rule px-2 py-1.5 font-normal" /></label>
+        <label class="text-sm font-semibold">Carbs (g) *<input name="carbs" required inputmode="decimal" class="mt-1 w-full rounded-md border-2 border-rule px-2 py-1.5 font-normal" /></label>
+        <label class="text-sm font-semibold">Fat (g) *<input name="fat" required inputmode="decimal" class="mt-1 w-full rounded-md border-2 border-rule px-2 py-1.5 font-normal" /></label>
+        <label class="text-sm font-semibold">Fibre (g)<input name="fibre" inputmode="decimal" class="mt-1 w-full rounded-md border-2 border-rule px-2 py-1.5 font-normal" /></label>
+        <label class="text-sm font-semibold">Sugar (g)<input name="sugar" inputmode="decimal" class="mt-1 w-full rounded-md border-2 border-rule px-2 py-1.5 font-normal" /></label>
+        <label class="text-sm font-semibold">Scoop size (g)<input name="serving_g" inputmode="decimal" placeholder="33" class="mt-1 w-full rounded-md border-2 border-rule px-2 py-1.5 font-normal" /></label>
+        <label class="text-sm font-semibold">Scoop label<input name="serving_label" placeholder="1 scoop = 33g" class="mt-1 w-full rounded-md border-2 border-rule px-2 py-1.5 font-normal" /></label>
+        <label class="text-sm font-semibold">Piece weight (g)<input name="piece_weight_g" inputmode="decimal" placeholder="30" class="mt-1 w-full rounded-md border-2 border-rule px-2 py-1.5 font-normal" /></label>
+        <label class="text-sm font-semibold">Piece name<input name="piece_label" placeholder="slice, egg" class="mt-1 w-full rounded-md border-2 border-rule px-2 py-1.5 font-normal" /></label>
+        <label class="text-sm font-semibold sm:col-span-2">Source link (pack photo page or brand page)<input name="source_url" placeholder="https://" class="mt-1 w-full rounded-md border-2 border-rule px-2 py-1.5 font-normal" /></label>
+        <label class="text-sm font-semibold sm:col-span-2 lg:col-span-4">Search spellings, comma separated<input name="aliases" placeholder="milkymist paneer, milky mist panir" class="mt-1 w-full rounded-md border-2 border-rule px-2 py-1.5 font-normal" /></label>
+        <div class="sm:col-span-2 lg:col-span-4"><button class="rounded-md bg-ultramarine px-4 py-2.5 font-semibold text-white hover:bg-ultramarine-deep">Add product</button></div>
+      </form>
+    </details>
+
+    <h2 class="display mt-8 text-2xl">Review queue ({review.length})</h2>
+    <p class="text-sm text-muted">Fetched values that failed automatic checks. Nothing here is public.</p>
+    {review.length === 0 ? <p class="mt-3 rounded-md border-2 border-dashed border-rule p-4 text-sm text-muted">Queue is empty.</p> : (
+      <ul class="mt-3 space-y-2">
+        {review.map((r: any) => (
+          <li class="flex flex-wrap items-center justify-between gap-3 rounded-md border-2 border-navy bg-paper p-3">
+            <div class="min-w-0">
+              <p class="font-semibold">{r.query} <span class="text-sm font-normal text-muted">→ {r.extracted?.name}</span></p>
+              <p class="text-xs text-muted">{r.extracted?.kcal} kcal · P {r.extracted?.protein} · C {r.extracted?.carbs} · F {r.extracted?.fat}</p>
+              {(r.failed_checks ?? []).includes('user_submitted')
+                ? <p class="text-xs font-semibold text-ultramarine">Sent by a visitor. Compare with the pack or the brand's page before approving.{(r.failed_checks ?? []).filter((c: string) => c !== 'user_submitted').length > 0 && <span class="text-fat"> Auto-check flags: {(r.failed_checks ?? []).filter((c: string) => c !== 'user_submitted').join(', ')}</span>}</p>
+                : <p class="text-xs text-fat">Failed: {(r.failed_checks ?? []).join(', ')}</p>}
+              {r.source_url && <a class="text-xs underline" href={r.source_url} target="_blank" rel="noopener noreferrer">Open source</a>}
+            </div>
+            <form method="post" action="/api/admin/action" class="flex gap-2">
+              <input type="hidden" name="id" value={r.id} />
+              <button name="act" value="approve" class="rounded bg-protein px-3 py-1.5 text-sm font-semibold text-white">Approve</button>
+              <button name="act" value="reject" class="rounded border-2 border-navy px-3 py-1.5 text-sm font-semibold">Reject</button>
+            </form>
+          </li>
+        ))}
+      </ul>
+    )}
+
+    <h2 class="display mt-10 text-2xl">Foods needing a check ({pending.length})</h2>
+    <p class="text-sm text-muted">Auto-fetched or sample rows. Edit the values against the pack or IFCT, then save to mark verified.</p>
+    <div class="mt-3 overflow-x-auto rounded-md border-2 border-navy bg-paper">
+      <table class="w-full min-w-[720px] text-sm">
+        <thead class="bg-navy text-left text-white"><tr><th class="p-2">Food</th><th class="p-2">kcal</th><th class="p-2">Protein</th><th class="p-2">Carbs</th><th class="p-2">Fat</th><th class="p-2">Actions</th></tr></thead>
+        <tbody>
+          {pending.slice(0, 200).map((f) => (
+            <tr class="border-t border-rule align-middle">
+              <td class="p-2"><a class="font-semibold underline" href={`/nutrition/${f.slug}`}>{foodTitle(f)}</a><br /><span class="text-xs text-muted">{f.status}</span></td>
+              <td colspan="5" class="p-2">
+                <form method="post" action="/api/admin/action" class="flex flex-wrap items-center gap-2">
+                  <input type="hidden" name="id" value={f.id} />
+                  {(['kcal', 'protein', 'carbs', 'fat'] as const).map((k) => (
+                    <input name={k} value={f[k]} inputmode="decimal" aria-label={k} class="w-20 rounded border-2 border-rule px-2 py-1" />
+                  ))}
+                  <button name="act" value="edit" class="rounded bg-ultramarine px-2.5 py-1 font-semibold text-white">Save as verified</button>
+                  <button name="act" value="verify" class="rounded bg-protein px-2.5 py-1 font-semibold text-white">Mark verified</button>
+                  <button name="act" value="delete" class="rounded border-2 border-fat px-2.5 py-1 font-semibold text-fat">Delete</button>
+                </form>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</Base>

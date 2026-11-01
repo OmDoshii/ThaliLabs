@@ -1,0 +1,9 @@
+{
+  "name": "thalilabs",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"]
+  // The Astro Cloudflare adapter generates the worker entry and asset bindings.
+  // Secrets (set with `wrangler secret put`, never commit):
+  //   ADMIN_PASSWORD, ADMIN_SESSION_SECRET, SUPABASE_URL,
+  //   SUPABASE_SERVICE_ROLE_KEY, GEMINI_API_KEY, SERPER_API_KEY
+}

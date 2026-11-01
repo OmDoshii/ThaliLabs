@@ -1,0 +1,73 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  noindex?: boolean;
+  jsonLd?: object;
+  canonicalPath?: string;
+}
+const { title, description = 'Brand-wise calorie counter for Indian foods. Pick the exact brand, enter grams, get accurate calories and macros.', noindex = false, jsonLd, canonicalPath } = Astro.props;
+const canonical = new URL(canonicalPath ?? Astro.url.pathname, Astro.site ?? Astro.url).toString();
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#2237a6" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,100..900&family=Instrument+Sans:wght@400..700&display=swap"
+      rel="stylesheet"
+    />
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded focus:bg-marigold focus:px-3 focus:py-2 focus:text-navy">Skip to content</a>
+
+    <header class="bg-ultramarine text-white">
+      <div class="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5">
+        <a href="/" class="display text-2xl" aria-label="Thali Labs home">THALI<span class="text-marigold">LABS</span></a>
+        <nav class="flex items-center gap-5 text-sm font-medium" aria-label="Main">
+          <a class="hover:text-marigold" href="/nutrition">Food database</a>
+          <a class="hover:text-marigold" href="/#log">My log</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="flex-1">
+      <slot />
+    </main>
+
+    <footer class="mt-16 bg-navy text-white/80">
+      <div class="mx-auto grid max-w-6xl gap-6 px-5 py-10 text-sm md:grid-cols-3">
+        <div>
+          <p class="display text-xl text-white">THALI<span class="text-marigold">LABS</span></p>
+          <p class="mt-2 max-w-xs">Calories and macros by brand, for Indian foods. Per 100g, as printed on the label.</p>
+        </div>
+        <div>
+          <p class="font-semibold text-white">Data sources</p>
+          <p class="mt-2 max-w-sm">Packaged foods come from brand websites and{' '}
+            <a class="underline hover:text-marigold" href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a>{' '}
+            (ODbL licence). Generic foods follow Indian food composition tables. Every entry links to its source.</p>
+        </div>
+        <div>
+          <p class="font-semibold text-white">Heads up</p>
+          <p class="mt-2 max-w-sm">Brands change recipes. If a value looks wrong, use "Report wrong value" on the food page.</p>
+          <p class="mt-4"><a href="/admin" class="text-xs text-white/50 hover:text-white">Admin</a></p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
